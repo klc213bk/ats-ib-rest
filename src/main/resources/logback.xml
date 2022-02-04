@@ -1,6 +1,6 @@
 <configuration>
-	<property name="LOG_DIR" value="/data/ats/ats-ib/logs" />
-	<property name="LOG_FILE" value="ats-ib" />
+	<property name="LOG_DIR" value="/data/ats/ats-ib-rest/logs" />
+	<property name="LOG_FILE" value="ats-ib-rest" />
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n

@@ -24,7 +24,6 @@ import com.ib.controller.ApiController.IRealTimeBarHandler;
 import com.ib.controller.Bar;
 import com.klc213.ats.common.AtsBar;
 import com.klc213.ats.common.BarSizeEnum;
-import com.klc213.ats.common.CurrencyEnum;
 import com.klc213.ats.common.TopicEnum;
 import com.klc213.ats.common.util.HttpUtils;
 import com.klc213.ats.common.util.KafkaUtils;
@@ -42,20 +41,28 @@ public class MktdataService {
 	@Value("${ats.kafka.rest.url}")
 	private String atsKafkaRestUrl;
 	
+	@Value("${replication.factor}")
+	private String replicationFactor;
+	
+	@Value("${num.partitions}")
+	private String numPartitions;
+	
 	@Autowired
 	private TwsApi twsApi;
 	
-	private Producer<String, String> producer;
+	private Producer<String, String> realTimeBarsProducer;
+	private String realTimeBarsTopic;
 	
 	private Map<String, IRealTimeBarHandler> realTimeBarHandlerMap = new HashMap<>();
 	
 	public void reqRealTimeBars(String symbol) throws Exception {
 		
-		String topic = KafkaUtils.getTwsMktDataTopic(symbol);
+		realTimeBarsTopic = "TWS.MKTDATA." + symbol;
 		Set<String> topicSet = KafkaUtils.listTopics(atsKafkaRestUrl);
-		if (!topicSet.contains(topic)) {
+		String url = null;
+		if (!topicSet.contains(realTimeBarsTopic)) {
 			// create Topic
-			String url = atsKafkaRestUrl + "/createTopic/"+topic;
+			url = String.format("%s/createTopic/%s/rf/%s/np/%s", atsKafkaRestUrl,realTimeBarsTopic,replicationFactor,numPartitions);
 			String response = HttpUtils.restService(url, "POST");
 			
 		}
@@ -65,8 +72,9 @@ public class MktdataService {
 
 			@Override
 			public void realtimeBar(Bar b) {
-				if (producer == null) {
-					producer = KafkaUtils.createProducer(kafkaBootstrapServer, kafkaClientId);
+				if (realTimeBarsProducer == null) {
+					String clientid = kafkaClientId + "-RealTimeBars";
+					realTimeBarsProducer = KafkaUtils.createProducer(kafkaBootstrapServer, clientid);
 				}
 				try { 
 					AtsBar atsBar = new AtsBar(
@@ -77,23 +85,16 @@ public class MktdataService {
 					ObjectMapper objectMapper = new ObjectMapper();
 					String jsonStr = objectMapper.writeValueAsString(atsBar);
 
-					final ProducerRecord<String, String> record = new ProducerRecord<>(topic, jsonStr);
+					final ProducerRecord<String, String> record = new ProducerRecord<>(realTimeBarsTopic, jsonStr);
 
-					RecordMetadata meta = producer.send(record).get();
+					RecordMetadata meta = realTimeBarsProducer.send(record).get();
 
 
-				} catch (JsonProcessingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					// TODO Auto-generated catch block
+				} catch (Exception e) {
+					
 					e.printStackTrace();
 				} finally {
-					producer.flush();
-					producer.close();
+					realTimeBarsProducer.flush();
 				}
 				
 			}
@@ -103,7 +104,7 @@ public class MktdataService {
 		Contract contract = new Contract();
 		contract.symbol(symbol);
 		contract.secType(SecType.STK);
-		contract.currency(CurrencyEnum.USD.name());
+		contract.currency("USD");
 		contract.exchange("SMART");
 		
 		twsApi.controller().reqRealTimeBars(contract, WhatToShow.MIDPOINT, true, handler);
@@ -115,6 +116,17 @@ public class MktdataService {
 		twsApi.controller().cancelRealtimeBars(handler);
 		
 		realTimeBarHandlerMap.remove(symbol);
+		
+		realTimeBarsProducer.close();
+		
+		Set<String> topicSet = KafkaUtils.listTopics(atsKafkaRestUrl);
+		String url = null;
+		if (!topicSet.contains(realTimeBarsTopic)) {
+			// create Topic
+			url = String.format("%s/deleteTopic/%s", atsKafkaRestUrl,realTimeBarsTopic);
+			String response = HttpUtils.restService(url, "POST");
+			
+		}
 //		
 //		String topic = KafkaUtils.getTwsMktDataTopic(symbol, BarSizeEnum.BARSIZE_5_SECONDS);
 //		Set<String> topicSet = KafkaUtils.listTopics(atsKafkaRestUrl);
