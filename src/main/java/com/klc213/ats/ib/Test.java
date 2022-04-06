@@ -1,12 +1,15 @@
 package com.klc213.ats.ib;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -34,9 +37,67 @@ public class Test {
 
 	public static void main(String[] args) {
 
-		testAccountTopic();
+//		testAccountTopic();
 
-		testRealTimeBar();
+//		testRealTimeBar();
+		
+		try {
+			List<String> topicList = listTopic();
+			
+			for (String topic : topicList) {
+				System.out.println(">>>topic:" + topic);
+			}
+			createTopic("TWS.ACCOUNT_DOWNLOAD_END");
+			
+			//deleteTopic("TWS.ACCOUNT_DOWNLOAD_END");
+			
+			List<String> topicList2 = listTopic();	
+			for (String topic : topicList2) {
+				System.out.println(">>>topic2:" + topic);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	public static List<String> listTopic() throws Exception {
+		ProcessBuilder builder = new ProcessBuilder();
+		builder.command("sh", "-c", "./bin/kafka-topics.sh --list --bootstrap-server localhost:9092");
+		builder.directory(new File("/opt/kafka"));
+		Process process = builder.start();
+		process.getInputStream();
+		List<String> topicList = new ArrayList<>();
+		new BufferedReader(new InputStreamReader(process.getInputStream())).lines().forEach( 
+				e -> topicList.add(e)
+				);
+		
+		int exitCode = process.waitFor();
+		System.out.println(">>>createTopic exitCode:" + exitCode);
+		
+		return topicList;
+	}
+	public static void createTopic(String topic) throws Exception {
+		ProcessBuilder builder = new ProcessBuilder();
+		builder.command("sh", "-c", "./bin/kafka-topics.sh --create --topic " + topic + " --bootstrap-server localhost:9092");
+		builder.directory(new File("/opt/kafka"));
+		Process process = builder.start();
+		process.getInputStream();
+		
+		int exitCode = process.waitFor();
+		System.out.println(">>>createTopic exitCode:" + exitCode);
+	
+	}
+	public static void deleteTopic(String topic) throws Exception {
+		ProcessBuilder builder = new ProcessBuilder();
+		builder.command("sh", "-c", "./bin/kafka-topics.sh --delete --topic " + topic + " --bootstrap-server localhost:9092");
+		builder.directory(new File("/opt/kafka"));
+		Process process = builder.start();
+		process.getInputStream();
+		
+		int exitCode = process.waitFor();
+		System.out.println(">>>deleteTopic exitCode:" + exitCode);
+	
 	}
 	public static void testRealTimeBar() {
 		Producer<String, String> producer = null;
