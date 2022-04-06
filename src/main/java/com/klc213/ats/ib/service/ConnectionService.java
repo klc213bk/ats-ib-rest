@@ -153,7 +153,6 @@ public class ConnectionService {
 					av.setCurrency(currency);
 					av.setKey(key);
 					av.setValue(value);
-					av.setUpdateTime(System.currentTimeMillis());
 					try {
 						
 						ObjectMapper objectMapper = new ObjectMapper();
@@ -188,7 +187,6 @@ public class ConnectionService {
 				portfolio.setMktPrice(BigDecimal.valueOf(position.marketPrice()));
 				portfolio.setMktValue(BigDecimal.valueOf(position.marketValue()));
 				portfolio.setPosition(BigDecimal.valueOf(position.position()));
-				portfolio.setUpdateTime(System.currentTimeMillis());
 				try {
 					
 					ObjectMapper objectMapper = new ObjectMapper();

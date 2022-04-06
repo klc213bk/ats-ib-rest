@@ -42,8 +42,6 @@
 			<groupId>com.klc213.ats</groupId>
 			<artifactId>ats-common</artifactId>
 			<version>1.0</version>
-			<scope>system</scope>
-    			<systemPath>${project.basedir}/src/main/resources/ats-common-1.0.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>com.ib</groupId>

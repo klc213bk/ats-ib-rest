@@ -21,7 +21,6 @@ import com.klc213.ats.common.AccountValue;
 import com.klc213.ats.common.AtsBar;
 import com.klc213.ats.common.BarSizeEnum;
 import com.klc213.ats.common.Contract;
-import com.klc213.ats.common.CurrencyEnum;
 import com.klc213.ats.common.Portfolio;
 import com.klc213.ats.common.TopicEnum;
 import com.klc213.ats.common.util.HttpUtils;
@@ -97,8 +96,8 @@ public class Test {
 		try {
 
 			Set<AccountValue> accountValueSet = new HashSet<>();
-			AccountValue accountValue = new AccountValue("CURRENCT_VALUE", new BigDecimal("12345.6"), CurrencyEnum.USD);
-			AccountValue accountValue2 = new AccountValue("BALANCE", new BigDecimal("12345.3"), CurrencyEnum.JPY);
+			AccountValue accountValue = new AccountValue("CURRENCT_VALUE", "12345.6", "USD");
+			AccountValue accountValue2 = new AccountValue("BALANCE", "12345.3", "JPY");
 
 			accountValueSet.add(accountValue);
 			accountValueSet.add(accountValue2);
@@ -108,7 +107,7 @@ public class Test {
 			Portfolio portfolio = new Portfolio();
 			Contract contract = new Contract();
 			contract.setSymbol("SPY");
-			contract.setCurrency(CurrencyEnum.USD);
+			contract.setCurrency("USD");
 			portfolio.setAccountCode("U1309876");
 			portfolio.setAvgCost(new BigDecimal("143.81"));
 			portfolio.setContract(contract);
@@ -119,7 +118,7 @@ public class Test {
 			Portfolio portfolio2 = new Portfolio();
 			Contract contract2 = new Contract();
 			contract2.setSymbol("DWI");
-			contract2.setCurrency(CurrencyEnum.TWD);
+			contract2.setCurrency("TWD");
 			portfolio2.setAccountCode("U1309875");
 			portfolio2.setAvgCost(new BigDecimal("143.82"));
 			portfolio2.setContract(contract2);
