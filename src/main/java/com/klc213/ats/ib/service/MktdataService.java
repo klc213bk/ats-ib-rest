@@ -2,6 +2,7 @@ package com.klc213.ats.ib.service;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -37,18 +38,12 @@ public class MktdataService {
 
 	@Value("${kafka.bootstrap.server}")
 	private String kafkaBootstrapServer;
-	
-	@Value("${ats.kafka.rest.url}")
-	private String atsKafkaRestUrl;
-	
-	@Value("${replication.factor}")
-	private String replicationFactor;
-	
-	@Value("${num.partitions}")
-	private String numPartitions;
-	
+
 	@Autowired
 	private TwsApi twsApi;
+	
+	@Autowired
+	private KafkaService kafkaService;
 	
 	private Producer<String, String> realTimeBarsProducer;
 	private String realTimeBarsTopic;
@@ -58,16 +53,12 @@ public class MktdataService {
 	public void reqRealTimeBars(String symbol) throws Exception {
 		
 		realTimeBarsTopic = "TWS.MKTDATA." + symbol;
-		Set<String> topicSet = KafkaUtils.listTopics(atsKafkaRestUrl);
-		String url = null;
-		if (!topicSet.contains(realTimeBarsTopic)) {
-			// create Topic
-			url = String.format("%s/createTopic/%s/rf/%s/np/%s", atsKafkaRestUrl,realTimeBarsTopic,replicationFactor,numPartitions);
-			String response = HttpUtils.restService(url, "POST");
-			
+		List<String> topics = kafkaService.listTopic();
+		if (!topics.contains(realTimeBarsTopic)) {
+			int exitCode = kafkaService.createTopic(realTimeBarsTopic);
+			LOGGER.info(">>> createTopic exitCode:{}", exitCode);
 		}
-		
-		
+
 		IRealTimeBarHandler handler = new IRealTimeBarHandler() {
 
 			@Override
@@ -119,14 +110,13 @@ public class MktdataService {
 		
 		realTimeBarsProducer.close();
 		
-		Set<String> topicSet = KafkaUtils.listTopics(atsKafkaRestUrl);
-		String url = null;
-		if (!topicSet.contains(realTimeBarsTopic)) {
-			// create Topic
-			url = String.format("%s/deleteTopic/%s", atsKafkaRestUrl,realTimeBarsTopic);
-			String response = HttpUtils.restService(url, "POST");
-			
+		List<String> topics = kafkaService.listTopic();
+		if (topics.contains(realTimeBarsTopic)) {
+			int exitCode = kafkaService.deleteTopic(realTimeBarsTopic);
+			LOGGER.info(">>> deleteTopic exitCode:{}", exitCode);
 		}
+		
+		
 //		
 //		String topic = KafkaUtils.getTwsMktDataTopic(symbol, BarSizeEnum.BARSIZE_5_SECONDS);
 //		Set<String> topicSet = KafkaUtils.listTopics(atsKafkaRestUrl);
