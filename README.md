@@ -1,3 +1,13 @@
+# install ib jar
+mvn install:install-file \
+-Dfile=/home/steven/gitrepo/ats/ats-ib-rest/src/main/resources/TwsApi.jar \
+-DgroupId=com.ib \
+-DartifactId=tws-api \
+-Dversion=9.73.01-SNAPSHOT \
+-Dpackaging=jar \
+-DgeneratePom=true
+
+
 # ats-ib-rest
 
 # start kafka server
