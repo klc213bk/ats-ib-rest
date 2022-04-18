@@ -51,43 +51,43 @@ public class KafkaService {
 	@Value("${kafka.bootstrap.server}")
 	private String kafkaBootstrapServer;
 	
-	public List<String> listTopic() throws Exception {
-		ProcessBuilder builder = new ProcessBuilder();
-		builder.command("sh", "-c", "./bin/kafka-topics.sh --list --bootstrap-server " + kafkaBootstrapServer);
-		builder.directory(new File(kafkaHome));
-		Process process = builder.start();
-		process.getInputStream();
-		List<String> topicList = new ArrayList<>();
-		new BufferedReader(new InputStreamReader(process.getInputStream())).lines().forEach( 
-				e -> topicList.add(e)
-				);
-		
-		int exitCode = process.waitFor();
-		System.out.println(">>>createTopic exitCode:" + exitCode);
-		
-		return topicList;
-	}
-	public int deleteTopic(String topic) throws Exception {
-		ProcessBuilder builder = new ProcessBuilder();
-		builder.command("sh", "-c", "./bin/kafka-topics.sh --delete --topic " + topic + " --bootstrap-server " + kafkaBootstrapServer);
-		builder.directory(new File(kafkaHome));
-		Process process = builder.start();
-		process.getInputStream();
-		
-		int exitCode = process.waitFor();
-		
-		return exitCode;
-	}
-	public int createTopic(String topic) throws Exception {
-		ProcessBuilder builder = new ProcessBuilder();
-		builder.command("sh", "-c", "./bin/kafka-topics.sh --create --topic " + topic + " --bootstrap-server " + kafkaBootstrapServer);
-		builder.directory(new File(kafkaHome));
-		Process process = builder.start();
-		process.getInputStream();
-		
-		int exitCode = process.waitFor();
-	
-		return exitCode;
-	
-	}
+//	public List<String> listTopic() throws Exception {
+//		ProcessBuilder builder = new ProcessBuilder();
+//		builder.command("sh", "-c", "./bin/kafka-topics.sh --list --bootstrap-server " + kafkaBootstrapServer);
+//		builder.directory(new File(kafkaHome));
+//		Process process = builder.start();
+//		process.getInputStream();
+//		List<String> topicList = new ArrayList<>();
+//		new BufferedReader(new InputStreamReader(process.getInputStream())).lines().forEach( 
+//				e -> topicList.add(e)
+//				);
+//		
+//		int exitCode = process.waitFor();
+//		System.out.println(">>>createTopic exitCode:" + exitCode);
+//		
+//		return topicList;
+//	}
+//	public int deleteTopic(String topic) throws Exception {
+//		ProcessBuilder builder = new ProcessBuilder();
+//		builder.command("sh", "-c", "./bin/kafka-topics.sh --delete --topic " + topic + " --bootstrap-server " + kafkaBootstrapServer);
+//		builder.directory(new File(kafkaHome));
+//		Process process = builder.start();
+//		process.getInputStream();
+//		
+//		int exitCode = process.waitFor();
+//		
+//		return exitCode;
+//	}
+//	public int createTopic(String topic) throws Exception {
+//		ProcessBuilder builder = new ProcessBuilder();
+//		builder.command("sh", "-c", "./bin/kafka-topics.sh --create --topic " + topic + " --bootstrap-server " + kafkaBootstrapServer);
+//		builder.directory(new File(kafkaHome));
+//		Process process = builder.start();
+//		process.getInputStream();
+//		
+//		int exitCode = process.waitFor();
+//	
+//		return exitCode;
+//	
+//	}
 }

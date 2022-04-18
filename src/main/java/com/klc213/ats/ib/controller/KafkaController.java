@@ -29,46 +29,46 @@ public class KafkaController {
 	private ObjectMapper mapper;
 	
 	
-	@PostMapping(path="/createTopic/{topic}", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> createTopic(@PathVariable("topic") String topic) {
-		logger.info(">>>>controller createTopic is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			int exitCode = kafkaService.createTopic(topic);
-			objectNode.put("returnCode", "0000");
-			objectNode.put("exitCode", exitCode);
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller createTopic finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
-	@PostMapping(path="/deleteTopic/{topic}", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> deleteTopic(@PathVariable("topic") String topic) {
-		logger.info(">>>>controller deleteTopic is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			int exitCode = kafkaService.deleteTopic(topic);
-			objectNode.put("returnCode", "0000");
-			objectNode.put("exitCode", exitCode);
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller deleteTopic finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
+//	@PostMapping(path="/createTopic/{topic}", produces=MediaType.APPLICATION_JSON_VALUE)
+//	@ResponseBody
+//	public ResponseEntity<Object> createTopic(@PathVariable("topic") String topic) {
+//		logger.info(">>>>controller createTopic is called");
+//		
+//		ObjectNode objectNode = mapper.createObjectNode();
+//		
+//		try {
+//			int exitCode = kafkaService.createTopic(topic);
+//			objectNode.put("returnCode", "0000");
+//			objectNode.put("exitCode", exitCode);
+//		} catch (Exception e) {
+//			objectNode.put("returnCode", "-9999");
+//			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
+//			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
+//		}
+//		
+//		logger.info(">>>>controller createTopic finished ");
+//		
+//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+//	}
+//	@PostMapping(path="/deleteTopic/{topic}", produces=MediaType.APPLICATION_JSON_VALUE)
+//	@ResponseBody
+//	public ResponseEntity<Object> deleteTopic(@PathVariable("topic") String topic) {
+//		logger.info(">>>>controller deleteTopic is called");
+//		
+//		ObjectNode objectNode = mapper.createObjectNode();
+//		
+//		try {
+//			int exitCode = kafkaService.deleteTopic(topic);
+//			objectNode.put("returnCode", "0000");
+//			objectNode.put("exitCode", exitCode);
+//		} catch (Exception e) {
+//			objectNode.put("returnCode", "-9999");
+//			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
+//			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
+//		}
+//		
+//		logger.info(">>>>controller deleteTopic finished ");
+//		
+//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+//	}
 }

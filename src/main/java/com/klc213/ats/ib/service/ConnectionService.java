@@ -83,41 +83,37 @@ public class ConnectionService {
 		acctNo = twsApi.accountList().get(0);
 
 		AccountInfo accountInfo = new AccountInfo();
-		Set<AccountValue> accountValueSet = new HashSet<>();
-		Set<Portfolio> portfolioSet = new HashSet<>();
+		Map<String, AccountValue> accountValueMap = new HashMap<>();
+		Map<Contract, Portfolio> portfolioMap = new HashMap<>();
 
-		accountInfo.setAccountCode(acctNo);
-		accountInfo.setAccountValueSet(accountValueSet);
-		accountInfo.setPortfolioSet(portfolioSet);
+		accountInfo.setAccountNo(acctNo);
+		accountInfo.setAccountValueMap(accountValueMap);
+		accountInfo.setPortfolioMap(portfolioMap);
 
 		producer = KafkaUtils.createProducer(kafkaBootstrapServer, kafkaClientId);
-		
+
 		twsApi.controller().reqAccountUpdates(subscribe, acctNo, new IAccountHandler() {
-
-			private Long acctTime = 0L;
-			//			private Map<AtsAccountValueKey,AtsAccountValue> atsAccountValueMap = new HashMap<>();
-			//			private Map<AtsContract,AtsPosition> atsPositionMap = new HashMap<>();
-
-			private final Object timeLock = new Object();
 
 			@Override
 			public void accountDownloadEnd(String accountNo) {
 				logger.info("callback accountDownloadEnd!!! accountNo={}", accountNo);
-	
+
 				try {
-					
-					ObjectMapper objectMapper = new ObjectMapper();
-					String jsonStr = objectMapper.writeValueAsString(accountNo);
+					if (StringUtils.equals(accountNo, accountInfo.getAccountNo())) {
+						ObjectMapper objectMapper = new ObjectMapper();
+						String jsonStr = objectMapper.writeValueAsString(accountInfo);
+						logger.info("accountInfo jsonStr={}", jsonStr);
+						
+						final ProducerRecord<String, String> record = new ProducerRecord<>(TopicEnum.TWS_ACCOUNT.getTopic(), jsonStr);
 
-					final ProducerRecord<String, String> record = new ProducerRecord<>(TopicEnum.TWS_ACCOUNT_DOWNLOAD_END.getTopic(), jsonStr);
+						RecordMetadata meta = producer.send(record).get();
+					}
 
-					RecordMetadata meta = producer.send(record).get();
-				
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} finally {
-					
+
 				}
 
 			}
@@ -125,49 +121,28 @@ public class ConnectionService {
 			@Override
 			public void accountTime(String accountTime) {
 				logger.info("Got call back account time !!! accountTime={}", accountTime);
-				
-				try {
-					
-					ObjectMapper objectMapper = new ObjectMapper();
-					String jsonStr = objectMapper.writeValueAsString(accountTime);
 
-					final ProducerRecord<String, String> record = new ProducerRecord<>(TopicEnum.TWS_ACCOUNT_TIME.getTopic(), jsonStr);
 
-					RecordMetadata meta = producer.send(record).get();
-				
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} finally {
-					
-				}
+				accountInfo.setAccountTime(accountTime);
+
 			}
 
 			@Override
 			public void accountValue(String account, String key, String value, String currency) {
 				logger.info("call back account value: {}, {}, {}, {}", account, key, value, currency);
 
-				if (StringUtils.equals(account, accountInfo.getAccountCode())) {
+				if (StringUtils.equals(account, accountInfo.getAccountNo())) {
+
+					Map<String, AccountValue> accountValueMap = accountInfo.getAccountValueMap();
+
+					String mapKey = currency + "_" + key;
 
 					AccountValue av = new AccountValue();
 					av.setCurrency(currency);
 					av.setKey(key);
 					av.setValue(value);
-					try {
-						
-						ObjectMapper objectMapper = new ObjectMapper();
-						String jsonStr = objectMapper.writeValueAsString(av);
 
-						final ProducerRecord<String, String> record = new ProducerRecord<>(TopicEnum.TWS_ACCOUNT_VALUE.getTopic(), jsonStr);
-
-						RecordMetadata meta = producer.send(record).get();
-					
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} finally {
-						
-					}
+					accountValueMap.put(mapKey, av);
 
 				}
 			}
@@ -176,34 +151,23 @@ public class ConnectionService {
 			public void updatePortfolio(Position position) {
 				logger.info("call back Position= {}", ToStringBuilder.reflectionToString(position));
 
+				Map<Contract, Portfolio> accountValueMap = accountInfo.getPortfolioMap();
+
 				Contract contract = new Contract();
 				contract.setSymbol(position.contract().symbol());
 				contract.setCurrency(position.contract().currency());
-				
+
 				Portfolio portfolio = new Portfolio();
-				portfolio.setAccountCode(accountInfo.getAccountCode());
+				portfolio.setAccountNo(accountInfo.getAccountNo());
 				portfolio.setAvgCost(BigDecimal.valueOf(position.averageCost()));
 				portfolio.setContract(contract);
 				portfolio.setMktPrice(BigDecimal.valueOf(position.marketPrice()));
 				portfolio.setMktValue(BigDecimal.valueOf(position.marketValue()));
 				portfolio.setPosition(BigDecimal.valueOf(position.position()));
-				try {
-					
-					ObjectMapper objectMapper = new ObjectMapper();
-					String jsonStr = objectMapper.writeValueAsString(portfolio);
 
-					final ProducerRecord<String, String> record = new ProducerRecord<>(TopicEnum.TWS_PORTFOLIO.getTopic(), jsonStr);
-
-					RecordMetadata meta = producer.send(record).get();
-				
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} finally {
-					
-				}
+				accountValueMap.put(contract, portfolio);
 			}
-			
+
 		});
 
 		return twsApi.isConnected();

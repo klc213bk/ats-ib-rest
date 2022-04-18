@@ -2,6 +2,7 @@ package com.klc213.ats.ib.service;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,9 @@ import com.klc213.ats.common.util.KafkaUtils;
 public class MktdataService {
 	private final static Logger LOGGER = LoggerFactory.getLogger(MktdataService.class);
 
+	@Value("${kafka.home}")
+	private String kafkaHome;
+	
 	@Value("${kafka.client.id}")
 	private String kafkaClientId;
 
@@ -46,18 +50,21 @@ public class MktdataService {
 	private KafkaService kafkaService;
 	
 	private Producer<String, String> realTimeBarsProducer;
-	private String realTimeBarsTopic;
+	
+	//private String realTimeBarsTopic;
 	
 	private Map<String, IRealTimeBarHandler> realTimeBarHandlerMap = new HashMap<>();
 	
+	private Set<String> realTimeTopicSet= new HashSet<>();
+	
 	public void reqRealTimeBars(String symbol) throws Exception {
-		
-		realTimeBarsTopic = "TWS.MKTDATA." + symbol;
-		List<String> topics = kafkaService.listTopic();
-		if (!topics.contains(realTimeBarsTopic)) {
-			int exitCode = kafkaService.createTopic(realTimeBarsTopic);
-			LOGGER.info(">>> createTopic exitCode:{}", exitCode);
+			
+		String topic = KafkaUtils.getTwsMktDataRealtimeTopic(symbol);
+		if (!realTimeTopicSet.contains(topic) ) {
+			KafkaUtils.createTopic(kafkaBootstrapServer, kafkaHome, topic);
+			realTimeTopicSet.add(topic);
 		}
+		
 
 		IRealTimeBarHandler handler = new IRealTimeBarHandler() {
 
@@ -76,10 +83,9 @@ public class MktdataService {
 					ObjectMapper objectMapper = new ObjectMapper();
 					String jsonStr = objectMapper.writeValueAsString(atsBar);
 
-					final ProducerRecord<String, String> record = new ProducerRecord<>(realTimeBarsTopic, jsonStr);
+					final ProducerRecord<String, String> record = new ProducerRecord<>(topic, jsonStr);
 
 					RecordMetadata meta = realTimeBarsProducer.send(record).get();
-
 
 				} catch (Exception e) {
 					
@@ -110,21 +116,11 @@ public class MktdataService {
 		
 		realTimeBarsProducer.close();
 		
-		List<String> topics = kafkaService.listTopic();
-		if (topics.contains(realTimeBarsTopic)) {
-			int exitCode = kafkaService.deleteTopic(realTimeBarsTopic);
-			LOGGER.info(">>> deleteTopic exitCode:{}", exitCode);
+		String topic = KafkaUtils.getTwsMktDataRealtimeTopic(symbol);
+		if (realTimeTopicSet.contains(topic)) {
+			KafkaUtils.deleteTopic(kafkaBootstrapServer, kafkaHome, topic);
+			realTimeTopicSet.remove(topic);
 		}
 		
-		
-//		
-//		String topic = KafkaUtils.getTwsMktDataTopic(symbol, BarSizeEnum.BARSIZE_5_SECONDS);
-//		Set<String> topicSet = KafkaUtils.listTopics(atsKafkaRestUrl);
-//		if (topicSet.contains(topic)) {
-//			// create Topic
-//			String url = atsKafkaRestUrl + "/deleteTopic/"+topic;
-//			String response = HttpUtils.restService(url, "POST");
-//			
-//		}
 	}
 }
