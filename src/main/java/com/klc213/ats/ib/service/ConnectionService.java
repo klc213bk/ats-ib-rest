@@ -82,14 +82,8 @@ public class ConnectionService {
 		boolean subscribe = true;
 		acctNo = twsApi.accountList().get(0);
 
-		AccountInfo accountInfo = new AccountInfo();
-		Map<String, AccountValue> accountValueMap = new HashMap<>();
-		Map<Contract, Portfolio> portfolioMap = new HashMap<>();
-
-		accountInfo.setAccountNo(acctNo);
-		accountInfo.setAccountValueMap(accountValueMap);
-		accountInfo.setPortfolioMap(portfolioMap);
-
+		AccountInfo accountInfo = new AccountInfo(acctNo);
+		
 		producer = KafkaUtils.createProducer(kafkaBootstrapServer, kafkaClientId);
 
 		twsApi.controller().reqAccountUpdates(subscribe, acctNo, new IAccountHandler() {
@@ -132,18 +126,8 @@ public class ConnectionService {
 				logger.info("call back account value: {}, {}, {}, {}", account, key, value, currency);
 
 				if (StringUtils.equals(account, accountInfo.getAccountNo())) {
-
-					Map<String, AccountValue> accountValueMap = accountInfo.getAccountValueMap();
-
-					String mapKey = currency + "_" + key;
-
-					AccountValue av = new AccountValue();
-					av.setCurrency(currency);
-					av.setKey(key);
-					av.setValue(value);
-
-					accountValueMap.put(mapKey, av);
-
+					accountInfo.addAccountValueMap(currency, key, value);
+					
 				}
 			}
 
@@ -151,8 +135,7 @@ public class ConnectionService {
 			public void updatePortfolio(Position position) {
 				logger.info("call back Position= {}", ToStringBuilder.reflectionToString(position));
 
-				Map<Contract, Portfolio> accountValueMap = accountInfo.getPortfolioMap();
-
+				
 				Contract contract = new Contract();
 				contract.setSymbol(position.contract().symbol());
 				contract.setCurrency(position.contract().currency());
@@ -165,7 +148,7 @@ public class ConnectionService {
 				portfolio.setMktValue(BigDecimal.valueOf(position.marketValue()));
 				portfolio.setPosition(BigDecimal.valueOf(position.position()));
 
-				accountValueMap.put(contract, portfolio);
+				accountInfo.addPortfolio(portfolio);
 			}
 
 		});
