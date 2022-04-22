@@ -1,6 +1,6 @@
 # install ib jar
 mvn install:install-file \
--Dfile=/home/steven/gitrepo/ats/ats-ib-rest/src/main/resources/TwsApi.jar \
+-Dfile=/home/steven/gitrepo/ats/ats-ib-rest/src/main/resources/tws-api-9.73.01-SNAPSHOT.jar \
 -DgroupId=com.ib \
 -DartifactId=tws-api \
 -Dversion=9.73.01-SNAPSHOT \
