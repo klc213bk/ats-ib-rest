@@ -55,17 +55,24 @@ public class MktdataService {
 	
 	private Map<String, IRealTimeBarHandler> realTimeBarHandlerMap = new HashMap<>();
 	
-	private Set<String> realTimeTopicSet= new HashSet<>();
+	private Map<String, Set<String>> realTimeTopicMap= new HashMap<>(); // topic, symbolSet
 	
 	public void reqRealTimeBars(String symbol) throws Exception {
 			
 		String topic = KafkaUtils.getTwsMktDataRealtimeTopic(symbol);
-		if (!realTimeTopicSet.contains(topic) ) {
+		if (!realTimeTopicMap.containsKey(topic) ) {
 			KafkaUtils.createTopic(kafkaBootstrapServer, kafkaHome, topic);
-			realTimeTopicSet.add(topic);
+			Set<String> symbolSet = new HashSet<>();
+			symbolSet.add(symbol);
+			
+			realTimeTopicMap.put(topic, symbolSet);
+		} else {
+			Set<String> symbolSet = realTimeTopicMap.get(topic);
+			if (!symbolSet.contains(symbol)) {
+				symbolSet.add(symbol);
+			}
 		}
 		
-
 		IRealTimeBarHandler handler = new IRealTimeBarHandler() {
 
 			@Override
@@ -110,16 +117,27 @@ public class MktdataService {
 	}
 	public void cancelRealTimeBars(String symbol) throws Exception {
 		IRealTimeBarHandler handler = realTimeBarHandlerMap.get(symbol);
-		twsApi.controller().cancelRealtimeBars(handler);
-		
-		realTimeBarHandlerMap.remove(symbol);
-		
-		realTimeBarsProducer.close();
-		
+
 		String topic = KafkaUtils.getTwsMktDataRealtimeTopic(symbol);
-		if (realTimeTopicSet.contains(topic)) {
-			KafkaUtils.deleteTopic(kafkaBootstrapServer, kafkaHome, topic);
-			realTimeTopicSet.remove(topic);
+		if (realTimeTopicMap.containsKey(topic) ) {
+			Set<String> symbolSet = realTimeTopicMap.get(topic);
+			if (symbolSet.contains(symbol)) {
+				symbolSet.remove(symbol);
+				if (symbolSet.isEmpty()) {
+					twsApi.controller().cancelRealtimeBars(handler);
+					
+					realTimeBarsProducer.close();
+					
+					KafkaUtils.deleteTopic(kafkaBootstrapServer, kafkaHome, topic);
+					
+					realTimeBarHandlerMap.remove(symbol);
+					
+				}
+			}  else {
+				// error, do nothing
+			}
+		} else {
+			// topic does not exists, do nothing
 		}
 		
 	}
