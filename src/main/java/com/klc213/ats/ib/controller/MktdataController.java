@@ -24,9 +24,33 @@ public class MktdataController {
 
 	@Autowired
 	private MktdataService mktdataService;
+	
+	@Autowired
+	private YahooDataService yahooDataService;
 
 	@Autowired
 	private ObjectMapper mapper;
+	
+	@PostMapping(path="/yahooFinanceDaily", produces=MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<Object> yahooFinanceDaily() {
+		LOG.info(">>>>controller yahooFinanceDaily is called");
+		
+		ObjectNode objectNode = mapper.createObjectNode();
+		
+		try {
+			mktdataService.yahooFinanceDaily();
+			objectNode.put("returnCode", "0000");
+		} catch (Exception e) {
+			objectNode.put("returnCode", "-9999");
+			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
+			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
+		}
+		
+		LOG.info(">>>>controller yahooFinanceDaily finished ");
+		
+		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+	}
 	
 	@PostMapping(path="/reqRealTimeBars/{symbol}", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
