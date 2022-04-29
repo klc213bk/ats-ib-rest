@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.klc213.ats.ib.service.MktdataService;
+import com.klc213.ats.ib.service.YahooDataService;
 
 @RestController
 @RequestMapping("/mktdata")
@@ -31,15 +32,22 @@ public class MktdataController {
 	@Autowired
 	private ObjectMapper mapper;
 	
-	@PostMapping(path="/yahooFinanceDaily", produces=MediaType.APPLICATION_JSON_VALUE)
+	/**
+	 * 
+	 * @param symbol
+	 * @param fromdate yyyy-MM-dd
+	 * @param todate yyyy-MM-dd
+	 * @return
+	 */
+	@PostMapping(path="/downloadMktDataDaily/{symbol}/{fromdate}/{todate}", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<Object> yahooFinanceDaily() {
-		LOG.info(">>>>controller yahooFinanceDaily is called");
+	public ResponseEntity<Object> downloadMktDataDaily(@PathVariable("symbol") String symbol, @PathVariable("fromdate") String fromdate, @PathVariable("todate") String todate) {
+		LOG.info(">>>>controller downloadMktDataDaily is called");
 		
 		ObjectNode objectNode = mapper.createObjectNode();
 		
 		try {
-			mktdataService.yahooFinanceDaily();
+			yahooDataService.downloadMktDataDaily(symbol, fromdate, todate);
 			objectNode.put("returnCode", "0000");
 		} catch (Exception e) {
 			objectNode.put("returnCode", "-9999");
@@ -47,11 +55,30 @@ public class MktdataController {
 			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
 		}
 		
-		LOG.info(">>>>controller yahooFinanceDaily finished ");
+		LOG.info(">>>>controller downloadMktDataDaily finished ");
 		
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
-	
+	@PostMapping(path="/downloadMktDataDailySP500/{fromdate}/{todate}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<Object> downloadMktDataDailySP500(@PathVariable("fromdate") String fromdate, @PathVariable("todate") String todate) {
+		LOG.info(">>>>controller downloadMktDataDailySP500 is called");
+		
+		ObjectNode objectNode = mapper.createObjectNode();
+		
+		try {
+			yahooDataService.downloadMktDataDailySP500(fromdate, todate);
+			objectNode.put("returnCode", "0000");
+		} catch (Exception e) {
+			objectNode.put("returnCode", "-9999");
+			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
+			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
+		}
+		
+		LOG.info(">>>>controller downloadMktDataDailySP500 finished ");
+		
+		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+	}
 	@PostMapping(path="/reqRealTimeBars/{symbol}", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<Object> reqRealTimeBars(@PathVariable("symbol") String symbol) {
