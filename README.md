@@ -5,7 +5,7 @@ $ ./start-kafka-server2.sh
 
 # install ib jar
 mvn install:install-file \
--Dfile=/home/steven/gitrepo/ats/ats-ib-rest/src/main/resources/tws-api-9.73.01-SNAPSHOT.jar \
+-Dfile=/home/steven/git/ats-ib-rest/TwsApi.jar \
 -DgroupId=com.ib \
 -DartifactId=tws-api \
 -Dversion=9.73.01-SNAPSHOT \
