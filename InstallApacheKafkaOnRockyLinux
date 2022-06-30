@@ -1,0 +1,61 @@
+$ sudo dnf -y update
+
+$ sudo -i
+$ cd /opt
+$ curl -LO https://dlcdn.apache.org/kafka/3.2.0/kafka_2.13-3.2.0.tgz
+
+$ tar -xzvf kafka_2.13-3.2.0.tgz
+$ rm -rf kafka_*.tgz
+$ mv kafka* kafka
+
+$ ./bin/zookeeper-server-start.sh config/zookeeper.properties
+$ ./bin/kafka-server-start.sh config/server.properties
+
+
+$ sudo vim /etc/systemd/system/zookeeper.service
+
+[Unit]
+Description=Apache Zookeeper server
+Documentation=http://zookeeper.apache.org
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+ExecStart=/opt/kafka/bin/zookeeper-server-start.sh /opt/kafka/config/zookeeper.properties
+ExecStop=/opt/kafka/bin/zookeeper-server-stop.sh
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
+
+$ sudo vim /etc/systemd/system/kafka.service
+
+[Unit]
+Description=Apache Kafka Server
+Documentation=http://kafka.apache.org/documentation.html
+Requires=zookeeper.service
+[Service]
+Type=simple
+Environment="JAVA_HOME=/usr/lib/jvm/jre-17-openjdk"
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+[Install]
+WantedBy=multi-user.target
+
+$ sudo systemctl daemon-reload
+
+$ sudo systemctl start zookeeper
+$ sudo systemctl start kafka
+
+$ sudo systemctl status zookeeper
+$ sudo systemctl status kafka
+
+# test
+$ cd /opt/kafka
+$ ./bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic loginevents
+$ ./bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+$ ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic loginevents --from-beginning
+$ ./bin/kafka-console-producer.sh --broker-list localhost:9092 --topic loginevents
+
+
