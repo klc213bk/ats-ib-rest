@@ -45,7 +45,10 @@ WantedBy=multi-user.target
 
 $ sudo systemctl daemon-reload
 
+$ sudo systemctl enable zookeeper
 $ sudo systemctl start zookeeper
+
+$ sudo systemctl enable kafka
 $ sudo systemctl start kafka
 
 $ sudo systemctl status zookeeper
